@@ -1,0 +1,9 @@
+
+IMPORTANT PUBLIC SERVICE ANNOUNCEMENT:
+
+This has recently been ugpraded to use the CUDA 5.5 toolkit.
+
+If you keep using CUDA 5.0, you will not see the amazing 30%
+speed gains with David Andersen's new Kepler, Titan kernels.
+
+Also see README.txt
