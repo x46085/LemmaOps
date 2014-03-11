@@ -840,7 +840,9 @@ static void *miner_thread(void *userdata)
 		if (!opt_quiet && !abort_flag) { // CB
 			sprintf(s, thr_hashrates[thr_id] >= 1e6 ? "%.0f" : "%.2f",
 				1e-3 * thr_hashrates[thr_id]);
-			applog(LOG_INFO, "GPU #%d: %s, %lu hashes, %s khash/s",
+			//applog(LOG_INFO, "GPU #%d: %s, %lu hashes, %s khash/s",
+			//	device_map[thr_id], device_name[thr_id], hashes_done, s);
+			applog(LOG_INFO, "{\"gpuNum\" : %d , \"gfxCard\" : \"%s\", \"hashes\" : %lu, \"hashRate\" : %s }",
 				device_map[thr_id], device_name[thr_id], hashes_done, s);
 		}
 		if (opt_benchmark && thr_id == opt_n_threads - 1) {
@@ -849,7 +851,7 @@ static void *miner_thread(void *userdata)
 				hashrate += thr_hashrates[i];
 			if (i == opt_n_threads) {
 				sprintf(s, hashrate >= 1e6 ? "%.0f" : "%.2f", 1e-3 * hashrate);
-				applog(LOG_INFO, "Total: %s khash/s", s);
+				//applog(LOG_INFO, "{'TotalKh' : %s }", s);
 			}
 		}
 

@@ -103,6 +103,7 @@ void applog(int prio, const char *fmt, ...)
 
 		len = 40 + strlen(fmt) + 2;
 		f = (char*)alloca(len);
+		/*
 		sprintf(f, "[%d-%02d-%02d %02d:%02d:%02d] %s\n",
 			tm.tm_year + 1900,
 			tm.tm_mon + 1,
@@ -111,6 +112,8 @@ void applog(int prio, const char *fmt, ...)
 			tm.tm_min,
 			tm.tm_sec,
 			fmt);
+		*/
+		sprintf(f, "%s\n", fmt);
 		pthread_mutex_lock(&applog_lock);
 		vfprintf(stderr, f, ap);	/* atomic write to stderr */
 		fflush(stderr);
