@@ -37,14 +37,16 @@ function start_mining(){
 		for(var i = 0; i < datalist.length; i++) {
 		    if(datalist[i].length > 0) {
 		        try{
+					cgminer.stdout.write('\u001B[2J\u001B[0;0f');
+					console.log('\u001B[2J\u001B[0;0f');
 					dataString = datalist[i].substring(12);
 					console.log(dataString);
 		            var jdata = JSON.parse(dataString);
-					//Format: "{gpuNum : %d, hashes : %"PRIu64", hashRate: %.1f, temp:%.1f, fanSpeed: %d}" 
+					//Format: "{gpuNum : %d, hashRate: %.1f, temp:%.1f}"					
 					stats.gauge(gauge_prefix+".GPU"+jdata.gpuNum+".HashRate", jdata.hashRate);
 					stats.gauge(gauge_prefix+".GPU"+jdata.gpuNum+".Temp", jdata.temp);						
 		        } catch(err) {
-		            //console.log("err:", err);
+		            console.log("err:", err);
 		        }
 		    }
 		}

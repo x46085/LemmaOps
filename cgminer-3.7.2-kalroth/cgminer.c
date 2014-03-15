@@ -346,6 +346,10 @@ struct thread_q *getq;
 static int total_work;
 struct work *staged_work = NULL;
 
+static float hashRate0 = 0.0f;
+static float hashRate1 = 0.0f;
+static float hashRate2 = 0.0f;
+
 struct schedtime {
 	bool enable;
 	struct tm tm;
@@ -5349,18 +5353,28 @@ static void hashmeter(int thr_id, struct timeval *diff,
 		double thread_rolling = 0.0;
 		int i;
 
+		float hashRate = hashes_done / 1000 / secs;
+
+		if(thr_id == 0){
+			hashRate0 = hashRate;
+		} else if (thr_id == 1){
+			hashRate1 = hashRate;
+		} else if (thr_id == 2){
+			hashRate2 = hashRate;
+		}
+
 		applog(LOG_DEBUG, "[thread %d: %"PRIu64" hashes, %.1f khash/sec]",
 			thr_id, hashes_done, hashes_done / 1000 / secs);
 
-		int engineclock = 0, memclock = 0, activity = 0, fanspeed = 0, fanpercent = 0, powertune = 0;
-		float temp = 0, vddc = 0;
-		if (gpu_stats(thr_id, &temp, &engineclock, &memclock, &vddc, &activity, &fanspeed, &fanpercent, &powertune)){
-			applog(LOG_ERR, "{\"gpuNum\" : %d, \"hashes\" : %"PRIu64", \"hashRate\": %.1f, \"temp\":%.1f, \"fanSpeed\": %d}", 
-					thr_id, hashes_done, hashes_done / 1000 / secs, temp, fanspeed);	
-		}
+		//int engineclock = 0, memclock = 0, activity = 0, fanspeed = 0, fanpercent = 0, powertune = 0;
+		//float temp = 0, vddc = 0;
+		//if (gpu_stats(thr_id, &temp, &engineclock, &memclock, &vddc, &activity, &fanspeed, &fanpercent, &powertune)){
+		//	applog(LOG_ERR, "{\"gpuNum\" : %d, \"hashes\" : %"PRIu64", \"hashRate\": %.1f, \"temp\":%.1f, \"fanSpeed\": %d}", 
+		//			thr_id, hashes_done, hashes_done / 1000 / secs, temp, fanspeed);	
+		//}
 
-		//applog(LOG_ERR, "{\"gpuNum\" : %d, \"hashes\" : %"PRIu64", \"hashRate\": %.1f }",
-		//	thr_id, hashes_done, hashes_done / 1000 / secs);
+		//applog(LOG_ERR, "{\"gpuNum\" : %d, \"hashes\" : %"PRIu64", \"hashRate\": %.1f, \"temp\":%.1f, \"fanSpeed\": %d}", 
+		//			thr_id, hashes_done, hashes_done / 1000 / secs, 0.0f, 0);
 
 		/* Rolling average for each thread and each device */
 		decay_time(&thr->rolling, local_mhashes / secs, secs);
@@ -7438,11 +7452,23 @@ static void *watchdog_thread(void __maybe_unused *userdata)
 			snprintf(dev_str, sizeof(dev_str), "%s%d", cgpu->drv->name, gpu);
 
 #ifdef HAVE_ADL
-			//int engineclock = 0, memclock = 0, activity = 0, fanspeed = 0, fanpercent = 0, powertune = 0;
-			//float temp = 0, vddc = 0;
-			//if (gpu_stats(gpu, &temp, &engineclock, &memclock, &vddc, &activity, &fanspeed, &fanpercent, &powertune)){
-			//	applog(LOG_ERR, "{\"gpuNum\" : %d, \"temp\":%.1f, \"fanSpeed\": %d}", gpu, temp, fanspeed);	
-			//}
+			int engineclock = 0, memclock = 0, activity = 0, fanspeed = 0, fanpercent = 0, powertune = 0;
+			float temp = 0, vddc = 0;
+			
+			float hashRate = 0.0f;
+			
+			if (gpu_stats(gpu, &temp, &engineclock, &memclock, &vddc, &activity, &fanspeed, &fanpercent, &powertune)){
+				if (gpu == 0 && hashRate0 != 0.0f){
+					hashRate = hashRate0;
+				} else if (gpu == 1 && hashRate1 != 0.0f){
+					hashRate = hashRate1;
+				} else if (gpu == 2 && hashRate2 != 0.0f){
+					hashRate = hashRate2;
+				}
+				applog(LOG_ERR, "{\"gpuNum\" : %d, \"hashRate\": %.1f, \"temp\": %.1f}", gpu, hashRate, temp);
+				fflush(stderr);
+			}
+			
 			if (adl_active && cgpu->has_adl)
 				gpu_autotune(gpu, denable);
 			//if (opt_debug && cgpu->has_adl) {
