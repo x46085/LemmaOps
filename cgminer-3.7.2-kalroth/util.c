@@ -195,9 +195,6 @@ static size_t resp_hdr_cb(void *ptr, size_t size, size_t nmemb, void *user_data)
 	if (!*val)			/* skip blank value */
 		goto out;
 
-	if (opt_protocol)
-		applog(LOG_DEBUG, "HTTP hdr(%s): %s", key, val);
-
 	if (!strcasecmp("X-Roll-Ntime", key)) {
 		hi->hadrolltime = true;
 		if (!strncasecmp("N", val, 1))
@@ -212,7 +209,7 @@ static size_t resp_hdr_cb(void *ptr, size_t size, size_t nmemb, void *user_data)
 				hi->hadexpire = true;
 			} else
 				hi->rolltime = opt_scantime;
-			applog(LOG_DEBUG, "X-Roll-Ntime expiry set to %d", hi->rolltime);
+			//applog(LOG_DEBUG, "X-Roll-Ntime expiry set to %d", hi->rolltime);
 		}
 	}
 
@@ -360,9 +357,6 @@ json_t *json_rpc_call(CURL *curl, const char *url,
 		keep_curlalive(curl);
 	curl_easy_setopt(curl, CURLOPT_POST, 1);
 
-	if (opt_protocol)
-		applog(LOG_DEBUG, "JSON protocol request:\n%s", rpc_req);
-
 	upload_data.buf = rpc_req;
 	upload_data.len = strlen(rpc_req);
 	sprintf(len_hdr, "Content-Length: %lu",
@@ -417,7 +411,7 @@ json_t *json_rpc_call(CURL *curl, const char *url,
 	}
 
 	if (!all_data.buf) {
-		applog(LOG_DEBUG, "Empty data received in json_rpc_call.");
+		//applog(LOG_DEBUG, "Empty data received in json_rpc_call.");
 		goto err_out;
 	}
 
@@ -462,16 +456,13 @@ json_t *json_rpc_call(CURL *curl, const char *url,
 	if (!val) {
 		applog(LOG_INFO, "JSON decode failed(%d): %s", err.line, err.text);
 
-		if (opt_protocol)
-			applog(LOG_DEBUG, "JSON protocol response:\n%s", (char *)(all_data.buf));
-
 		goto err_out;
 	}
 
 	if (opt_protocol) {
 		char *s = json_dumps(val, JSON_INDENT(3));
 
-		applog(LOG_DEBUG, "JSON protocol response:\n%s", s);
+		//applog(LOG_DEBUG, "JSON protocol response:\n%s", s);
 		free(s);
 	}
 
@@ -511,8 +502,6 @@ err_out:
 	databuf_free(&all_data);
 	curl_slist_free_all(headers);
 	curl_easy_reset(curl);
-	if (!successful_connect)
-		applog(LOG_DEBUG, "Failed to connect in json_rpc_call");
 	curl_easy_setopt(curl, CURLOPT_FRESH_CONNECT, 1);
 	return NULL;
 }
@@ -696,12 +685,6 @@ bool fulltest(const unsigned char *hash, const unsigned char *target)
 		swab256(target_swap, target);
 		hash_str = bin2hex(hash_swap, 32);
 		target_str = bin2hex(target_swap, 32);
-
-		applog(LOG_DEBUG, " Proof: %s\nTarget: %s\nTrgVal? %s",
-			hash_str,
-			target_str,
-			rc ? "YES (hash <= target)" :
-			     "no (false positive; hash > target)");
 
 		free(hash_str);
 		free(target_str);
@@ -1290,9 +1273,6 @@ bool stratum_send(struct pool *pool, char *s, ssize_t len)
 {
 	enum send_ret ret = SEND_INACTIVE;
 
-	if (opt_protocol)
-		applog(LOG_DEBUG, "SEND: %s", s);
-
 	mutex_lock(&pool->stratum_lock);
 	if (pool->stratum_active)
 		ret = __stratum_send(pool, s, len);
@@ -1304,15 +1284,15 @@ bool stratum_send(struct pool *pool, char *s, ssize_t len)
 		case SEND_OK:
 			break;
 		case SEND_SELECTFAIL:
-			applog(LOG_DEBUG, "Write select failed on %s sock", pool->poolname);
+			//applog(LOG_DEBUG, "Write select failed on %s sock", pool->poolname);
 			suspend_stratum(pool);
 			break;
 		case SEND_SENDFAIL:
-			applog(LOG_DEBUG, "Failed to send in stratum_send");
+			//applog(LOG_DEBUG, "Failed to send in stratum_send");
 			suspend_stratum(pool);
 			break;
 		case SEND_INACTIVE:
-			applog(LOG_DEBUG, "Stratum send failed due to no pool stratum_active");
+			//applog(LOG_DEBUG, "Stratum send failed due to no pool stratum_active");
 			break;
 	}
 	return (ret == SEND_OK);
@@ -1378,7 +1358,7 @@ static void recalloc_sock(struct pool *pool, size_t len)
 		return;
 	new = new + (RBUFSIZE - (new % RBUFSIZE));
 	// Avoid potentially recursive locking
-	// applog(LOG_DEBUG, "Recallocing pool sockbuf to %d", new);
+	// //applog(LOG_DEBUG, "Recallocing pool sockbuf to %d", new);
 	pool->sockbuf = realloc(pool->sockbuf, new);
 	if (!pool->sockbuf)
 		quithere(1, "Failed to realloc pool sockbuf");
@@ -1399,7 +1379,7 @@ char *recv_line(struct pool *pool)
 
 		cgtime(&rstart);
 		if (!socket_full(pool, DEFAULT_SOCKWAIT)) {
-			applog(LOG_DEBUG, "Timed out waiting for data on socket_full");
+			//applog(LOG_DEBUG, "Timed out waiting for data on socket_full");
 			goto out;
 		}
 
@@ -1411,7 +1391,7 @@ char *recv_line(struct pool *pool)
 			memset(s, 0, RBUFSIZE);
 			n = recv(pool->sock, s, RECVSIZE, 0);
 			if (!n) {
-				applog(LOG_DEBUG, "Socket closed waiting in recv_line");
+				//applog(LOG_DEBUG, "Socket closed waiting in recv_line");
 				suspend_stratum(pool);
 				break;
 			}
@@ -1419,7 +1399,7 @@ char *recv_line(struct pool *pool)
 			waited = tdiff(&now, &rstart);
 			if (n < 0) {
 				if (!sock_blocks() || !socket_full(pool, DEFAULT_SOCKWAIT - waited)) {
-					applog(LOG_DEBUG, "Failed to recv sock in recv_line");
+					//applog(LOG_DEBUG, "Failed to recv sock in recv_line");
 					suspend_stratum(pool);
 					break;
 				}
@@ -1434,7 +1414,7 @@ char *recv_line(struct pool *pool)
 	buflen = strlen(pool->sockbuf);
 	tok = strtok(pool->sockbuf, "\n");
 	if (!tok) {
-		applog(LOG_DEBUG, "Failed to parse a \\n terminated string in recv_line");
+		//applog(LOG_DEBUG, "Failed to parse a \\n terminated string in recv_line");
 		goto out;
 	}
 	sret = strdup(tok);
@@ -1453,8 +1433,6 @@ char *recv_line(struct pool *pool)
 out:
 	if (!sret)
 		clear_sock(pool);
-	else if (opt_protocol)
-		applog(LOG_DEBUG, "RECVD: %s", sret);
 	return sret;
 }
 
@@ -1611,16 +1589,6 @@ static bool parse_notify(struct pool *pool, json_t *val)
 	memcpy(pool->coinbase + cb1_len + pool->n1_len + pool->n2size, cb2, cb2_len);
 	cg_wunlock(&pool->data_lock);
 
-	if (opt_protocol) {
-		applog(LOG_DEBUG, "job_id: %s", job_id);
-		applog(LOG_DEBUG, "prev_hash: %s", prev_hash);
-		applog(LOG_DEBUG, "coinbase1: %s", coinbase1);
-		applog(LOG_DEBUG, "coinbase2: %s", coinbase2);
-		applog(LOG_DEBUG, "bbversion: %s", bbversion);
-		applog(LOG_DEBUG, "nbit: %s", nbit);
-		applog(LOG_DEBUG, "ntime: %s", ntime);
-		applog(LOG_DEBUG, "clean: %s", clean ? "yes" : "no");
-	}
 	free(coinbase1);
 	free(coinbase2);
 	free(cb1);
@@ -1656,9 +1624,7 @@ static bool parse_diff(struct pool *pool, json_t *val)
 			applog(LOG_NOTICE, "%s difficulty changed to %d", pool->poolname ,idiff);
 		else
 			applog(LOG_NOTICE, "%s difficulty changed to %f", pool->poolname, diff);
-	} else
-		applog(LOG_DEBUG, "%s difficulty set to %f", pool->poolname, diff);
-
+	}
 	return true;
 }
 
@@ -1861,8 +1827,6 @@ static bool http_negotiate(struct pool *pool, int sockd, bool http0)
 			pool->sockaddr_url, pool->stratum_port, pool->sockaddr_url,
 			pool->stratum_port);
 	}
-	applog(LOG_DEBUG, "Sending proxy %s:%s - %s",
-		pool->sockaddr_proxy_url, pool->sockaddr_proxy_port, buf);
 	send(sockd, buf, strlen(buf), 0);
 	len = recv(sockd, buf, 12, 0);
 	if (len <= 0) {
@@ -1871,8 +1835,7 @@ static bool http_negotiate(struct pool *pool, int sockd, bool http0)
 		return false;
 	}
 	buf[len] = '\0';
-	applog(LOG_DEBUG, "Received from proxy %s:%s - %s",
-	       pool->sockaddr_proxy_url, pool->sockaddr_proxy_port, buf);
+	
 	if (strcmp(buf, "HTTP/1.1 200") && strcmp(buf, "HTTP/1.0 200")) {
 		applog(LOG_WARNING, "HTTP Error from proxy %s:%s - %s",
 		       pool->sockaddr_proxy_url, pool->sockaddr_proxy_port, buf);
@@ -1899,8 +1862,6 @@ static bool http_negotiate(struct pool *pool, int sockd, bool http0)
 		}
 	}
 
-	applog(LOG_DEBUG, "Success negotiating with %s:%s HTTP proxy",
-	       pool->sockaddr_proxy_url, pool->sockaddr_proxy_port);
 	return true;
 }
 
@@ -1914,8 +1875,7 @@ static bool socks5_negotiate(struct pool *pool, int sockd)
 	buf[0] = 0x05;
 	buf[1] = 0x01;
 	buf[2] = 0x00;
-	applog(LOG_DEBUG, "Attempting to negotiate with %s:%s SOCKS5 proxy",
-	       pool->sockaddr_proxy_url, pool->sockaddr_proxy_port );
+	
 	send(sockd, buf, 3, 0);
 	if (recv_byte(sockd) != 0x05 || recv_byte(sockd) != buf[2]) {
 		applog(LOG_WARNING, "Bad response from %s:%s SOCKS5 server",
@@ -1960,8 +1920,6 @@ static bool socks5_negotiate(struct pool *pool, int sockd)
 	for (i = 0; i < 2; i++)
 		recv_byte(sockd);
 
-	applog(LOG_DEBUG, "Success negotiating with %s:%s SOCKS5 proxy",
-	       pool->sockaddr_proxy_url, pool->sockaddr_proxy_port);
 	return true;
 }
 
@@ -2121,7 +2079,6 @@ static bool setup_stratum_socket(struct pool *pool)
 	for (p = servinfo; p != NULL; p = p->ai_next) {
 		sockd = socket(p->ai_family, p->ai_socktype, p->ai_protocol);
 		if (sockd == -1) {
-			applog(LOG_DEBUG, "Failed socket");
 			continue;
 		}
 
@@ -2136,7 +2093,6 @@ static bool setup_stratum_socket(struct pool *pool)
 
 			if (!sock_connecting()) {
 				CLOSESOCKET(sockd);
-				applog(LOG_DEBUG, "Failed sock connect");
 				continue;
 			}
 			FD_ZERO(&rw);
@@ -2149,13 +2105,12 @@ static bool setup_stratum_socket(struct pool *pool)
 				len = sizeof(err);
 				n = getsockopt(sockd, SOL_SOCKET, SO_ERROR, (void *)&err, &len);
 				if (!n && !err) {
-					applog(LOG_DEBUG, "Succeeded delayed connect");
 					block_socket(sockd);
 					break;
 				}
 			}
 			CLOSESOCKET(sockd);
-			applog(LOG_DEBUG, "Select timeout/failed connect");
+			//applog(LOG_DEBUG, "Select timeout/failed connect");
 			continue;
 		}
 		applog(LOG_WARNING, "Succeeded immediate connect");
@@ -2283,12 +2238,12 @@ resend:
 	}
 
 	if (__stratum_send(pool, s, strlen(s)) != SEND_OK) {
-		applog(LOG_DEBUG, "Failed to send s in initiate_stratum");
+		//applog(LOG_DEBUG, "Failed to send s in initiate_stratum");
 		goto out;
 	}
 
 	if (!socket_full(pool, DEFAULT_SOCKWAIT)) {
-		applog(LOG_DEBUG, "Timed out waiting for response in initiate_stratum");
+		//applog(LOG_DEBUG, "Timed out waiting for response in initiate_stratum");
 		goto out;
 	}
 
@@ -2325,8 +2280,7 @@ resend:
 	}
 
 	sessionid = get_sessionid(res_val);
-	if (!sessionid)
-		applog(LOG_DEBUG, "Failed to get sessionid in initiate_stratum");
+	
 	nonce1 = json_array_string(res_val, 1);
 	if (!nonce1) {
 		applog(LOG_INFO, "Failed to get nonce1 in initiate_stratum");
@@ -2353,9 +2307,6 @@ resend:
 	pool->n2size = n2size;
 	cg_wunlock(&pool->data_lock);
 
-	if (sessionid)
-		applog(LOG_DEBUG, "%s stratum session id: %s", pool->poolname, pool->sessionid);
-
 	ret = true;
 out:
 	if (ret) {
@@ -2363,10 +2314,7 @@ out:
 			pool->stratum_url = pool->sockaddr_url;
 		pool->stratum_active = true;
 		pool->swork.diff = 1;
-		if (opt_protocol) {
-			applog(LOG_DEBUG, "%s confirmed mining.subscribe with extranonce1 %s extran2size %d",
-			       pool->poolname, pool->nonce1, pool->n2size);
-		}
+		
 	} else {
 		if (recvd && !noresume) {
 			/* Reset the sessionid used for stratum resuming in case the pool
@@ -2378,11 +2326,11 @@ out:
 			pool->sessionid = pool->nonce1 = NULL;
 			cg_wunlock(&pool->data_lock);
 
-			applog(LOG_DEBUG, "Failed to resume stratum, trying afresh");
+			//applog(LOG_DEBUG, "Failed to resume stratum, trying afresh");
 			noresume = true;
 			goto resend;
 		}
-		applog(LOG_DEBUG, "Initiate stratum failed");
+		//applog(LOG_DEBUG, "Initiate stratum failed");
 		if (sockd)
 			suspend_stratum(pool);
 	}

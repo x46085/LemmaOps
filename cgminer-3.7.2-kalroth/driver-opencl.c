@@ -901,7 +901,7 @@ retry:
 				wlogprint("Must restart device before enabling it");
 				goto retry;
 			}
-			applog(LOG_DEBUG, "Pushing sem post to thread %d", thr->id);
+			//applog(LOG_DEBUG, "Pushing sem post to thread %d", thr->id);
 
 			cgsem_post(&thr->sem);
 		}
@@ -1777,7 +1777,7 @@ static int64_t opencl_scanhash(struct thr_info *thr, struct work *work,
 			applog(LOG_ERR, "Error: clEnqueueWriteBuffer failed.");
 			return -1;
 		}
-		applog(LOG_DEBUG, "GPU %d found something?", gpu->device_id);
+		//applog(LOG_DEBUG, "GPU %d found something?", gpu->device_id);
 		postcalc_hash_async(thr, work, thrdata->res);
 		memset(thrdata->res, 0, buffersize);
 		/* This finish flushes the writebuffer set with CL_FALSE in clEnqueueWriteBuffer */

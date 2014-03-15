@@ -1,5 +1,4 @@
 var spawn  = require('child_process').spawn;
-var execute= require('child_process').exec;
 var StatsD = require('node-statsd').StatsD;
 var os     = require('os');
 var stats  = new StatsD();
@@ -27,48 +26,36 @@ function start_mining(){
 	//console.log(guage_prefix_array[3]);
 	gauge_prefix = gauge_prefix_array[3];
 
-	var current_temp = 0;
-	var cudatemp = execute('nvidia-settings -q gpucoretemp -t',
-	  function (error, stdout, stderr) { current_temp = parseInt(stdout); });
+	var cgminer = spawn('/home/lemma/Desktop/start_miner.sh', []);
+	cgminer.stderr.setEncoding('utf8');
 
-	//console.log(current_temp);
 
-	var cudaminer = spawn('/home/lemma/Desktop/start_miner.sh', []);
-	cudaminer.stderr.setEncoding('utf8');
-	cudaminer.stderr.on('data', function (data) {
+	cgminer.stderr.on('data', function (data) {
 		var datalist = data.split("\n");
 
 		for(var i = 0; i < datalist.length; i++) {
 		    if(datalist[i].length > 0) {
-		        try{		
-		            var jdata = JSON.parse(datalist[i]);
-					console.log(datalist[i]);		
-					if(jdata["gfxCard"]){  
-						//Format: "{gpuNum:%d , gfxCard:%s, hashes:%lu, hashRate:%s }" 
-						cudatemp = execute('nvidia-settings -q gpucoretemp -t',
-		  		    		function (error, stdout, stderr) { current_temp = parseInt(stdout); });
-						jdata.gfxCard.replace(" ", "_");
+		        try{
+					dataString = datalist[i].substring(12);
+					console.log(dataString);
+		            var jdata = JSON.parse(dataString);					
+					if(jdata["hashRate"]){  
+						//Format: "{gpuNum : %d, hashes : %"PRIu64", hashRate: %.1f}" 
 						stats.gauge(gauge_prefix+".GPU"+jdata.gpuNum+".HashRate", jdata.hashRate);
-						stats.gauge(gauge_prefix+".GPU"+jdata.gpuNum+".Temp", current_temp);
-					} else if (jdata["accepted"]){ 
-						//Format: "{accepted:%lu, rejected:%lu, percent:%.2f%%, khashs:%s, success: %s}"
-						if(Boolean(jdata.success)){
-							stats.increment(gauge_prefix+".AcceptCount");
-						} else {
-							stats.increment(gauge_prefix+".RejectCount");
-						}
-						stats.gauge(gauge_prefix+".TotalKHs", jdata.khashs);
-						stats.gauge(gauge_prefix+".AcceptPercent", jdata.percent);
+						//console.log("Sent to statsd: "+gauge_prefix+".GPU"+jdata.gpuNum+".HashRate: "+jdata.hashRate);
+						
+					} else if (jdata["temp"]){ 
+						//Format: "{gpuNum : %d, temp :%.1f, fanSpeed: %d}"
+						stats.gauge(gauge_prefix+".GPU"+jdata.gpuNum+".Temp", jdata.temp);
+						//console.log("Sent to statsd: "+gauge_prefix+".GPU"+jdata.gpuNum+".Temp: "+jdata.temp);
 					}
 		        } catch(err) {
 		            //console.log("err:", err);
-		            console.log(datalist[i]);
 		        }
 		    }
 		}
 	});
-
-	cudaminer.on('close', function (code) {
+	cgminer.on('close', function (code) {
 		console.log('child process exited with code', code);
 
 		// cudaminer closed, exit node process
