@@ -901,7 +901,7 @@ retry:
 				wlogprint("Must restart device before enabling it");
 				goto retry;
 			}
-			//applog(LOG_DEBUG, "Pushing sem post to thread %d", thr->id);
+			applog(LOG_DEBUG, "Pushing sem post to thread %d", thr->id);
 
 			cgsem_post(&thr->sem);
 		}
@@ -1520,16 +1520,12 @@ static void get_opencl_statline_before(char *buf, size_t bufsiz, struct cgpu_inf
 
 static void get_opencl_statline(char *buf, size_t bufsiz, struct cgpu_info *gpu)
 {
-	// Only print GPU thread count when more than one.
-	if (gpu->threads > 1)
-		tailsprintf(buf, bufsiz, " T:%d", gpu->threads);
-
 	if (gpu->rawintensity > 0)
-		tailsprintf(buf, bufsiz, " rI:%d", gpu->rawintensity);
+		tailsprintf(buf, bufsiz, " T:%d rI:%3d", gpu->threads, gpu->rawintensity);
 	else if (gpu->xintensity > 0)
-		tailsprintf(buf, bufsiz, " xI:%d", gpu->xintensity);
+		tailsprintf(buf, bufsiz, " T:%d xI:%3d", gpu->threads, gpu->xintensity);
 	else
-		tailsprintf(buf, bufsiz, " I:%2d", gpu->intensity);
+		tailsprintf(buf, bufsiz, " T:%d I:%2d", gpu->threads, gpu->intensity);
 }
 
 struct opencl_thread_data {
@@ -1777,7 +1773,7 @@ static int64_t opencl_scanhash(struct thr_info *thr, struct work *work,
 			applog(LOG_ERR, "Error: clEnqueueWriteBuffer failed.");
 			return -1;
 		}
-		//applog(LOG_DEBUG, "GPU %d found something?", gpu->device_id);
+		applog(LOG_DEBUG, "GPU %d found something?", gpu->device_id);
 		postcalc_hash_async(thr, work, thrdata->res);
 		memset(thrdata->res, 0, buffersize);
 		/* This finish flushes the writebuffer set with CL_FALSE in clEnqueueWriteBuffer */

@@ -29,6 +29,7 @@ function start_mining(){
 	var cgminer = spawn('/home/lemma/Desktop/start_miner.sh', []);
 	cgminer.stderr.setEncoding('utf8');
 
+	//cgminer.stderr.on('data', function (data) { console.log("ERR: "+data); });
 
 	cgminer.stderr.on('data', function (data) {
 		var datalist = data.split("\n");
@@ -55,6 +56,7 @@ function start_mining(){
 		    }
 		}
 	});
+
 	cgminer.on('close', function (code) {
 		console.log('child process exited with code', code);
 
