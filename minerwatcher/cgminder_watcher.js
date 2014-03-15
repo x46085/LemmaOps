@@ -1,7 +1,9 @@
 var spawn  = require('child_process').spawn;
 var StatsD = require('node-statsd').StatsD;
 var os     = require('os');
+var fs 	   = require('fs');
 var stats  = new StatsD();
+
 
 var gauge_prefix = 0;
 
@@ -26,30 +28,31 @@ function start_mining(){
 	//console.log(guage_prefix_array[3]);
 	gauge_prefix = gauge_prefix_array[3];
 
-	var cgminer = spawn('/home/lemma/Desktop/start_miner.sh', []);
+	var cgminer = spawn('/home/lemma/Desktop/start_miner.sh', []);//, { detached: true, stdio: ['pipe', 'pipe', process.stderr]});
 	cgminer.stderr.setEncoding('utf8');
 
-	//cgminer.stderr.on('data', function (data) { console.log("ERR: "+data); });
+	//cgminer.stderr.on('data', function (data) { console.log("ERR: "+data.substring(12)); });
 
 	cgminer.stderr.on('data', function (data) {
-		var datalist = data.split("\n");
+		try{
+			console.log('\u001B[2J\u001B[0;0f');
+			console.log(data);
+			var datalist = data.split("\n");
 
-		for(var i = 0; i < datalist.length; i++) {
-		    if(datalist[i].length > 0) {
-		        try{
-					cgminer.stdout.write('\u001B[2J\u001B[0;0f');
-					console.log('\u001B[2J\u001B[0;0f');
+			for(var i = 0; i < datalist.length; i++) {
+				if(datalist[i].length > 0) {				    
+					cgminer.stderr.write('\u001B[2J\u001B[0;0f');					
 					dataString = datalist[i].substring(12);
-					console.log(dataString);
-		            var jdata = JSON.parse(dataString);
+					//console.log(dataString);
+			        var jdata = JSON.parse(dataString);
 					//Format: "{gpuNum : %d, hashRate: %.1f, temp:%.1f}"					
 					stats.gauge(gauge_prefix+".GPU"+jdata.gpuNum+".HashRate", jdata.hashRate);
-					stats.gauge(gauge_prefix+".GPU"+jdata.gpuNum+".Temp", jdata.temp);						
-		        } catch(err) {
-		            console.log("err:", err);
-		        }
-		    }
-		}
+					stats.gauge(gauge_prefix+".GPU"+jdata.gpuNum+".Temp", jdata.temp);
+				}
+			}
+		} catch(err) {
+	        console.log("err:", data+" : "+err);
+	    }
 	});
 
 	cgminer.on('close', function (code) {
@@ -58,6 +61,9 @@ function start_mining(){
 		// cudaminer closed, exit node process
 		process.exit(1);
 	});
+	
+	cgminer.unref();
+
 }
 
 function connect_delay(){
