@@ -39,17 +39,10 @@ function start_mining(){
 		        try{
 					dataString = datalist[i].substring(12);
 					console.log(dataString);
-		            var jdata = JSON.parse(dataString);					
-					if(jdata["hashRate"]){  
-						//Format: "{gpuNum : %d, hashes : %"PRIu64", hashRate: %.1f}" 
-						stats.gauge(gauge_prefix+".GPU"+jdata.gpuNum+".HashRate", jdata.hashRate);
-						//console.log("Sent to statsd: "+gauge_prefix+".GPU"+jdata.gpuNum+".HashRate: "+jdata.hashRate);
-						
-					} else if (jdata["temp"]){ 
-						//Format: "{gpuNum : %d, temp :%.1f, fanSpeed: %d}"
-						stats.gauge(gauge_prefix+".GPU"+jdata.gpuNum+".Temp", jdata.temp);
-						//console.log("Sent to statsd: "+gauge_prefix+".GPU"+jdata.gpuNum+".Temp: "+jdata.temp);
-					}
+		            var jdata = JSON.parse(dataString);
+					//Format: "{gpuNum : %d, hashes : %"PRIu64", hashRate: %.1f, temp:%.1f, fanSpeed: %d}" 
+					stats.gauge(gauge_prefix+".GPU"+jdata.gpuNum+".HashRate", jdata.hashRate);
+					stats.gauge(gauge_prefix+".GPU"+jdata.gpuNum+".Temp", jdata.temp);						
 		        } catch(err) {
 		            //console.log("err:", err);
 		        }

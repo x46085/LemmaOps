@@ -5352,8 +5352,15 @@ static void hashmeter(int thr_id, struct timeval *diff,
 		applog(LOG_DEBUG, "[thread %d: %"PRIu64" hashes, %.1f khash/sec]",
 			thr_id, hashes_done, hashes_done / 1000 / secs);
 
-		applog(LOG_ERR, "{\"gpuNum\" : %d, \"hashes\" : %"PRIu64", \"hashRate\": %.1f }",
-			thr_id, hashes_done, hashes_done / 1000 / secs);
+		int engineclock = 0, memclock = 0, activity = 0, fanspeed = 0, fanpercent = 0, powertune = 0;
+		float temp = 0, vddc = 0;
+		if (gpu_stats(thr_id, &temp, &engineclock, &memclock, &vddc, &activity, &fanspeed, &fanpercent, &powertune)){
+			applog(LOG_ERR, "{\"gpuNum\" : %d, \"hashes\" : %"PRIu64", \"hashRate\": %.1f, \"temp\":%.1f, \"fanSpeed\": %d}", 
+					thr_id, hashes_done, hashes_done / 1000 / secs, temp, fanspeed);	
+		}
+
+		//applog(LOG_ERR, "{\"gpuNum\" : %d, \"hashes\" : %"PRIu64", \"hashRate\": %.1f }",
+		//	thr_id, hashes_done, hashes_done / 1000 / secs);
 
 		/* Rolling average for each thread and each device */
 		decay_time(&thr->rolling, local_mhashes / secs, secs);
@@ -7431,17 +7438,17 @@ static void *watchdog_thread(void __maybe_unused *userdata)
 			snprintf(dev_str, sizeof(dev_str), "%s%d", cgpu->drv->name, gpu);
 
 #ifdef HAVE_ADL
-			int engineclock = 0, memclock = 0, activity = 0, fanspeed = 0, fanpercent = 0, powertune = 0;
-			float temp = 0, vddc = 0;
-			if (gpu_stats(gpu, &temp, &engineclock, &memclock, &vddc, &activity, &fanspeed, &fanpercent, &powertune)){
-				applog(LOG_ERR, "{\"gpuNum\" : %d, \"temp\":%.1f, \"fanSpeed\": %d}", gpu, temp, fanspeed);	
-			}
+			//int engineclock = 0, memclock = 0, activity = 0, fanspeed = 0, fanpercent = 0, powertune = 0;
+			//float temp = 0, vddc = 0;
+			//if (gpu_stats(gpu, &temp, &engineclock, &memclock, &vddc, &activity, &fanspeed, &fanpercent, &powertune)){
+			//	applog(LOG_ERR, "{\"gpuNum\" : %d, \"temp\":%.1f, \"fanSpeed\": %d}", gpu, temp, fanspeed);	
+			//}
 			if (adl_active && cgpu->has_adl)
 				gpu_autotune(gpu, denable);
-			if (opt_debug && cgpu->has_adl) {
-				applog(LOG_DEBUG, "%.1f C  F: %d%%(%dRPM)  E: %dMHz  M: %dMhz  V: %.3fV  A: %d%%  P: %d%%",
-				temp, fanpercent, fanspeed, engineclock, memclock, vddc, activity, powertune);
-			}
+			//if (opt_debug && cgpu->has_adl) {
+			//	applog(LOG_DEBUG, "%.1f C  F: %d%%(%dRPM)  E: %dMHz  M: %dMhz  V: %.3fV  A: %d%%  P: %d%%",
+			//	temp, fanpercent, fanspeed, engineclock, memclock, vddc, activity, powertune);
+			//}
 #endif
 			
 			/* Thread is waiting on getwork or disabled */
