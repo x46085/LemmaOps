@@ -29,8 +29,11 @@ sudo easy_install django-tagging
  
 sudo easy_install zope.interface
  
-sudo easy_install twisted
- 
+##sudo easy_install twisted
+
+sudo apt-get install python-pip
+sudo pip install Twisted==11.1.0
+
 sudo easy_install txamqp
  
 ####################################
