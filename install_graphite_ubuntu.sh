@@ -9,6 +9,8 @@
 cd
 sudo apt-get update
 sudo apt-get --assume-yes upgrade
+
+sudo apt-get install --assume-yes python-software-properties
  
 wget https://launchpad.net/graphite/0.9/0.9.10/+download/graphite-web-0.9.10.tar.gz
 wget https://launchpad.net/graphite/0.9/0.9.10/+download/carbon-0.9.10.tar.gz
@@ -25,7 +27,7 @@ rm whisper-0.9.10.tar.gz
  
 sudo apt-get install --assume-yes apache2 apache2-mpm-worker apache2-utils apache2.2-bin apache2.2-common libapr1 libaprutil1 libaprutil1-dbd-sqlite3 build-essential python3.2 python-dev libpython3.2 python3-minimal libapache2-mod-wsgi libaprutil1-ldap memcached python-cairo-dev python-django python-ldap python-memcache python-pysqlite2 sqlite3 erlang-os-mon erlang-snmp rabbitmq-server bzr expect ssh libapache2-mod-python python-setuptools
  
-sudo easy_install django-tagging
+sudo easy_install django-tagging==0.3.1
  
 sudo easy_install zope.interface
  
