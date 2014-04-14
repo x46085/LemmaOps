@@ -1,0 +1,4 @@
+In order to get GPU to initialize on startup, even when no monitor is attached:
+
+1. Put the edid.bin file in the default home directory and set it to auto-log in.
+2. Put the xorg.conf file in the /etc/X11/ directory. 
