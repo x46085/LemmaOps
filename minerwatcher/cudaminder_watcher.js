@@ -33,6 +33,11 @@ function start_mining(){
 
 	//console.log(current_temp);
 
+	// example: "[2014-06-01 13:03:12] GPU #0: GeForce GTX 560 Ti, 198.73 khash/s"
+	var regexMatchAll = /^\[.+\].+, ([0-9\.]+).+$/
+	var regexSplit = /.+, /
+	var regexMatchHash = /([0-9]+\.[0-9][0-9])/
+
 	var cudaminer = spawn('/home/lemma/Desktop/start_miner.sh', []);
 	cudaminer.stderr.setEncoding('utf8');
 	cudaminer.stderr.on('data', function (data) {
@@ -40,29 +45,19 @@ function start_mining(){
 
 		for(var i = 0; i < datalist.length; i++) {
 		    if(datalist[i].length > 0) {
-		        try{		
-		            var jdata = JSON.parse(datalist[i]);
-					console.log(datalist[i]);		
-					if(jdata["gfxCard"]){  
-						//Format: "{gpuNum:%d , gfxCard:%s, hashes:%lu, hashRate:%s }" 
-						cudatemp = execute('nvidia-settings -q gpucoretemp -t',
-		  		    		function (error, stdout, stderr) { current_temp = parseInt(stdout); });
-						jdata.gfxCard.replace(" ", "_");
-						stats.gauge(gauge_prefix+".GPU"+jdata.gpuNum+".HashRate", jdata.hashRate);
-						stats.gauge(gauge_prefix+".GPU"+jdata.gpuNum+".Temp", current_temp);
-					} else if (jdata["accepted"]){ 
-						//Format: "{accepted:%lu, rejected:%lu, percent:%.2f%%, khashs:%s, success: %s}"
-						if(Boolean(jdata.success)){
-							stats.increment(gauge_prefix+".AcceptCount");
-						} else {
-							stats.increment(gauge_prefix+".RejectCount");
-						}
-						stats.gauge(gauge_prefix+".TotalKHs", jdata.khashs);
-						stats.gauge(gauge_prefix+".AcceptPercent", jdata.percent);
-					}
+			console.log(datalist[i]);
+		        try{
+			    var result = datalist[i].split(regexMatchHash);
+			    if (result.length > 1){			    
+				//console.log(result[1]);
+				cudatemp = execute('nvidia-settings -q gpucoretemp -t',
+		  			function (error, stdout, stderr) { current_temp = parseInt(stdout); });
+				stats.gauge(gauge_prefix+".HashRate", parseInt(result[1]));
+				stats.gauge(gauge_prefix+".Temp", current_temp);
+			    }
 		        } catch(err) {
 		            //console.log("err:", err);
-		            console.log(datalist[i]);
+		            console.log("ERROR PARSING: "+datalist[i]);
 		        }
 		    }
 		}
@@ -87,4 +82,26 @@ function connect_delay(){
 }
 
 connect_delay();
+
+			    /* Old Miner Stats, requires modifying cudaminer:
+		            var jdata = JSON.parse(datalist[i]);
+					console.log(datalist[i]);		
+					if(jdata["gfxCard"]){  
+						//Format: "{gpuNum:%d , gfxCard:%s, hashes:%lu, hashRate:%s }" 
+						cudatemp = execute('nvidia-settings -q gpucoretemp -t',
+		  		    		function (error, stdout, stderr) { current_temp = parseInt(stdout); });
+						jdata.gfxCard.replace(" ", "_");
+						stats.gauge(gauge_prefix+".GPU"+jdata.gpuNum+".HashRate", jdata.hashRate);
+						stats.gauge(gauge_prefix+".GPU"+jdata.gpuNum+".Temp", current_temp);
+					} else if (jdata["accepted"]){ 
+						//Format: "{accepted:%lu, rejected:%lu, percent:%.2f%%, khashs:%s, success: %s}"
+						if(Boolean(jdata.success)){
+							stats.increment(gauge_prefix+".AcceptCount");
+						} else {
+							stats.increment(gauge_prefix+".RejectCount");
+						}
+						stats.gauge(gauge_prefix+".TotalKHs", jdata.khashs);
+						stats.gauge(gauge_prefix+".AcceptPercent", jdata.percent);
+					}
+			   */
 
