@@ -34,9 +34,9 @@ function start_mining(){
 	//console.log(current_temp);
 
 	// example: "[2014-06-01 13:03:12] GPU #0: GeForce GTX 560 Ti, 198.73 khash/s"
-	var regexMatchAll = /^\[.+\].+, ([0-9\.]+).+$/
-	var regexSplit = /.+, /
-	var regexMatchHash = /([0-9]+\.[0-9][0-9])/
+	var regexMatchAll = /^\[.+\].+, ([0-9\.]+).+$/;
+	var regexSplit = /.+, /;
+	var regexMatchHash = /([0-9]+\.[0-9]+[ ][k][h])/;
 
 	var cudaminer = spawn('/home/lemma/Desktop/start_miner.sh', []);
 	cudaminer.stderr.setEncoding('utf8');
@@ -50,9 +50,11 @@ function start_mining(){
 			    var result = datalist[i].split(regexMatchHash);
 			    if (result.length > 1){			    
 				//console.log(result[1]);
+				var hashRate = result[1].split(" ");
+				console.log(hashRate[0]);
 				cudatemp = execute('nvidia-settings -q gpucoretemp -t',
 		  			function (error, stdout, stderr) { current_temp = parseInt(stdout); });
-				stats.gauge(gauge_prefix+".HashRate", parseInt(result[1]));
+				stats.gauge(gauge_prefix+".HashRate", parseInt(hashRate[0]));
 				stats.gauge(gauge_prefix+".Temp", current_temp);
 			    }
 		        } catch(err) {
