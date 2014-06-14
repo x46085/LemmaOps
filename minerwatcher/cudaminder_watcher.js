@@ -31,6 +31,12 @@ function start_mining(){
 	//console.log(guage_prefix_array[3]);
 	gauge_prefix = gauge_prefix_array[2]+"_"+gauge_prefix_array[3];
 
+	var mac_array = mac.split("::");
+	mac = mac_array[1];
+	mac_array = mac.split(":");
+	mac = mac_array[0]+mac_array[1]+mac_array[2]+mac_array[3];
+	console.log(mac);
+
 	var current_temp = 0;
 	var cudatemp = execute('nvidia-settings -q gpucoretemp -t',
 	  function (error, stdout, stderr) { current_temp = parseInt(stdout); });
@@ -59,11 +65,11 @@ function start_mining(){
 
 	// x11
 	var args = ["--algo=x11",
-		    "--url=stratum+tcp://192.168.2.85:3333", 
+		    "--url=stratum+tcp://pool.ipominer.com:3335", 
 		    "--user=x46085."+id,
 		    "--pass=x"];
 
-	var cudaminer = spawn('/home/lemma/CudaMiner/cudaminer', args);
+	var cudaminer = spawn('/home/lemma/ccminer/ccminer', args);
 	console.log(cudaminer+" "+args);
 
 	//var cudaminer = spawn('/home/lemma/Desktop/start_miner.sh', []);
