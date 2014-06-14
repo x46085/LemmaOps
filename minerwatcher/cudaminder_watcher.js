@@ -3,9 +3,11 @@ var execute= require('child_process').exec;
 var StatsD = require('node-statsd').StatsD;
 var os     = require('os');
 var stats  = new StatsD();
+var fs = require('fs');
 
 var gauge_prefix = 0;
 var mac = "00:00:00:00:00:00";
+var comp_id = 666;
 
 function get_interface(){
 	var ifaces=os.networkInterfaces();
@@ -24,18 +26,30 @@ function get_interface(){
 	  });
 	}
 	
+	var re = new RegExp("[0-9,.]+,"+mac);
+	console.log(re);
+
+	fs.readFile('MAC_IP_MAP.csv', 'utf8', function(err, data) {
+	  if (err) throw err;
+	  console.log('OK: ' + 'MAC_IP_MAP.csv');
+	  
+	  line_match = data.match(re);
+	  //console.log(line_match);
+	  ip_match = line_match[0].match(/[0-9]+,/);
+	  id = ip_match[0].split(",");
+          console.log("Server ID: "+id[0]);
+	  comp_id = id[0];
+
+	});
 }
+
 
 function start_mining(){
 	gauge_prefix_array = gauge_prefix.split(".");
 	//console.log(guage_prefix_array[3]);
 	gauge_prefix = gauge_prefix_array[2]+"_"+gauge_prefix_array[3];
 
-	var mac_array = mac.split("::");
-	mac = mac_array[1];
-	mac_array = mac.split(":");
-	mac = mac_array[0]+mac_array[1]+mac_array[2]+mac_array[3];
-	console.log(mac);
+	
 
 	var current_temp = 0;
 	var cudatemp = execute('nvidia-settings -q gpucoretemp -t',
@@ -89,8 +103,8 @@ function start_mining(){
 				//console.log(hashRate[0]);
 				cudatemp = execute('nvidia-settings -q gpucoretemp -t',
 		  			function (error, stdout, stderr) { current_temp = parseInt(stdout); });
-				stats.gauge(mac+".HashRate", parseInt(hashRate[0]));
-				stats.gauge(mac+".Temp", current_temp);
+				stats.gauge(comp_id+".HashRate", parseInt(hashRate[0]));
+				stats.gauge(comp_id+".Temp", current_temp);
 			    }
 		        } catch(err) {
 		            //console.log("err:", err);
