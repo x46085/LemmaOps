@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Lemma Hashrate</title>
+    <link rel="stylesheet" href="index.css" type="text/css" media="screen" charset="utf-8">
+    <style type="text/css">
+      /*
+       * graphene high-contrast theme customizations
+       */
+      svg.tsview{
+        background:none;
+      }
+      .ggview .gauge circle.outer{
+        stroke:none;
+        fill:none;
+      }
+      .ggview .gauge circle.inner{
+        stroke:none;
+        fill:none;
+      }
+      body{
+        background: url(diagmonds.png)
+      }
+      .span4{
+        text-align:center;
+      }
+      </style>
+  </head>
+  <body>
+	<iframe src="http://54.186.142.132/render?width=200&from=-30minutes&until=now&height=150&target=stats.gauges.250.HashRate&hideLegend=true&yMin=0&areaMode=first&_uniq=0.5324076421093196&title=stats.gauges.250.HashRate" height=150 width=200 ></iframe>
+	<script>
+		for (i = 1; i < 190; i++) { 
+			document.write("<iframe src='http://54.186.142.132/render?width=200&from=-30minutes&until=now&height=150&target=stats.gauges.'+i+'.HashRate&hideLegend=true&yMin=0&areaMode=first&_uniq=0.5324076421093196&title=stats.gauges.'+i+'.HashRate' height=150 width=200></iframe>");
+		}
+		
+		//window.setTimeout(location.reload(true), 60000);
+		
+		
+	</script>
+	<!--
+    <script type="text/javascript" src="/vendor/js/jquery-1.7.1.min.js"></script>
+    <script type="text/javascript" src="/minergrapher.js"></script>
+    -->
+
+  </body>
+</html>
