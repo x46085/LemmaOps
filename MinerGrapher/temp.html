@@ -29,13 +29,12 @@
   <body>
 	<iframe src="http://54.186.142.132/render?width=200&from=-30minutes&until=now&height=150&target=stats.gauges.250.Temp&hideLegend=true&yMin=0&areaMode=first&_uniq=0.5324076421093196&title=stats.gauges.250.Temp" height=150 width=200 ></iframe>
 	<script>
-		for (i = 1; i < 190; i++) { 
-			document.write("<iframe src='http://54.186.142.132/render?width=200&from=-30minutes&until=now&height=150&target=stats.gauges.'+i+'.Temp&hideLegend=true&yMin=0&areaMode=first&_uniq=0.5324076421093196&title=stats.gauges.'+i+'.Temp' height=150 width=200></iframe>");
+		for (i = 1; i < 190; i++) {
+			var docstring = String('http://54.186.142.132/render?width=200&from=-30minutes&until=now&height=150&target=stats.gauges.'+i+'.Temp&hideLegend=true&yMin=0&areaMode=first&_uniq=0.5324076421093196&title=stats.gauges.'+i+'.Temp');
+			document.write("<iframe src="+docstring+"height=150 width=200></iframe>");
 		}
-		
+
 		//window.setTimeout(location.reload(true), 60000);
-		
-		
 	</script>
 	<!--
     <script type="text/javascript" src="/vendor/js/jquery-1.7.1.min.js"></script>
